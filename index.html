@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Dify、FastGPT、NextChat 怎么配置大模型？GPT中转站无缝接入实战教程</title>
+  <meta name="description" content="详细讲解如何在 Dify、FastGPT、ChatGPT Next Web 以及业务代码中配置 GPT中转站，实现 OpenAI 兼容接口的无缝替换，快速接入并调用多种大模型 API。">
+  <meta name="keywords" content="GPT中转站,GPT API中转站,GPT调用,GPT API,GPT接口,OpenAI兼容接口,Dify接入大模型,FastGPT配置,NextChat配置,大模型API中转,AI API中转站">
+  <meta name="author" content="作者名称">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <link rel="canonical" href="https://quanzil.com/articles/how-to-call-gpt-api-in-china.html">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="ai api">
+  <meta property="og:title" content="Dify、FastGPT、NextChat 怎么配置大模型？GPT中转站无缝接入实战教程">
+  <meta property="og:description" content="详细讲解如何在 Dify、FastGPT、ChatGPT Next Web 以及业务代码中配置 GPT中转站，实现 OpenAI 兼容接口的无缝替换，快速接入并调用多种大模型 API。">
+  <meta property="og:url" content="https://quanzil.com/articles/how-to-call-gpt-api-in-china.html">
+  <meta property="og:image" content="https://quanzil.com/images/article-cover.jpg">
+  <meta property="og:locale" content="zh_CN">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Dify、FastGPT、NextChat 怎么配置大模型？GPT中转站无缝接入实战教程">
+  <meta name="twitter:description" content="详细讲解如何在 Dify、FastGPT、ChatGPT Next Web 以及业务代码中配置 GPT中转站，实现 OpenAI 兼容接口的无缝替换，快速接入并调用多种大模型 API。">
+  <meta name="twitter:image" content="https://quanzil.com/images/article-cover.jpg">
+
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --surface: #fff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --accent: #2563eb;
+      --accent-light: #eff6ff;
+      --code-bg: #111827;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.8;
+    }
+    a { color: var(--accent); }
+    .site-header {
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.97);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(10px);
+    }
+    .header-inner, .page, .site-footer {
+      width: min(100% - 32px, 1100px);
+      margin: 0 auto;
+    }
+    .header-inner {
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: max-content;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: -.04em;
+      box-shadow: 0 4px 10px rgba(37, 99, 235, .2);
+    }
+    .brand-copy {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+    .brand {
+      color: var(--text);
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .brand-tagline {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .main-nav {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: auto;
+      margin-right: 22px;
+    }
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      padding: 0 11px;
+      border-radius: 7px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      white-space: nowrap;
+      transition: color .2s ease, background .2s ease;
+    }
+    .nav-link:hover, .nav-link.active {
+      background: #f1f5f9;
+      color: var(--text);
+    }
+    .page { padding: 56px 0 72px; }
+    .article {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: 0 8px 30px rgba(15, 23, 42, .04);
+    }
+    .article-header { margin-bottom: 40px; }
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 600;
+    }
+    h1 {
+      margin: 0 0 16px;
+      color: #111827;
+      font-size: clamp(30px, 5vw, 46px);
+      line-height: 1.25;
+      letter-spacing: -.02em;
+    }
+    .summary {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 17px;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header-target {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 16px;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+      box-shadow: 0 3px 10px rgba(37, 99, 235, .18);
+      transition: background .2s ease, box-shadow .2s ease, transform .2s ease;
+    }
+    .header-target:hover {
+      background: #1d4ed8;
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 5px 14px rgba(37, 99, 235, .25);
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .markdown-body { font-size: 17px; }
+    .markdown-body h2, .markdown-body h3, .markdown-body h4 {
+      margin: 2em 0 .7em;
+      color: #111827;
+      line-height: 1.35;
+    }
+    .markdown-body h2 {
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+      font-size: 28px;
+    }
+    .markdown-body h3 { font-size: 22px; }
+    .markdown-body p, .markdown-body ul, .markdown-body ol, .markdown-body blockquote { margin: 1em 0; }
+    .markdown-body img { max-width: 100%; height: auto; border-radius: 8px; }
+    .markdown-body blockquote {
+      margin-left: 0;
+      padding: 12px 18px;
+      border-left: 3px solid var(--accent);
+      background: var(--accent-light);
+      color: #374151;
+    }
+    .markdown-body code {
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: #f3f4f6;
+      font-size: .9em;
+    }
+    .markdown-body pre {
+      overflow-x: auto;
+      padding: 18px;
+      border-radius: 8px;
+      background: var(--code-bg);
+      color: #e5e7eb;
+      line-height: 1.6;
+    }
+    .markdown-body pre code { padding: 0; background: transparent; color: inherit; }
+    .markdown-body table { display: block; overflow-x: auto; border-collapse: collapse; width: 100%; }
+    .markdown-body th, .markdown-body td { padding: 9px 12px; border: 1px solid var(--line); text-align: left; }
+    .markdown-body th { background: #f9fafb; }
+    .site-footer { padding: 24px 0 48px; color: var(--muted); font-size: 13px; text-align: center; }
+    @media (max-width: 640px) {
+      .header-inner { min-height: 56px; }
+      .brand-tagline, .main-nav { display: none; }
+      .page { padding: 24px 0 40px; }
+      .article { padding: 22px 18px; }
+      .markdown-body { font-size: 16px; }
+      .header-actions { gap: 10px; }
+      .header-target { padding: 8px 11px; font-size: 13px; }
+      .brand-mark { width: 31px; height: 31px; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a id="site-brand" class="brand-wrap" href="https://quanzil.com/" aria-label="返回网站首页">
+        <span id="brand-mark" class="brand-mark">AI</span>
+        <span class="brand-copy">
+          <span id="brand-name" class="brand">API</span>
+          <span id="brand-tagline" class="brand-tagline">让技术更简单</span>
+        </span>
+      </a>
+      <nav class="main-nav" aria-label="主导航">
+        <a id="nav-home" class="nav-link active" href="https://quanzil.com/">首页</a>
+        <a id="nav-articles" class="nav-link" href="https://quanzil.com/pricing">模型价格</a>
+        <a id="nav-docs" class="nav-link" href="https://docs.quanzil.com/">API 文档</a>
+        <a id="nav-pricing" class="nav-link" href="https://quanzil.com/news/focus">文章资讯</a>
+      </nav>
+      <div class="header-actions">
+        <a id="header-target" class="header-target" href="https://quanzil.com/" target="_blank" rel="noopener noreferrer">进入 API 中转站 →</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <article class="article" itemscope itemtype="https://schema.org/Article">
+      <header class="article-header">
+        <p class="eyebrow">原创文章</p>
+        <h1 id="article-title" itemprop="headline">Dify、FastGPT、NextChat 怎么配置大模型？GPT中转站无缝接入实战教程</h1>
+        <p id="article-summary" class="summary" itemprop="description">详细讲解如何在 Dify、FastGPT、ChatGPT Next Web 以及业务代码中配置 GPT中转站，实现 OpenAI 兼容接口的无缝替换，快速接入并调用多种大模型 API。</p>
+        <div class="meta">
+          <span>作者：<span id="article-author" itemprop="author">ai agent</span></span>
+          <span>发布时间：<time id="publish-date" itemprop="datePublished" datetime="2026-09-18">2026年09月18日</time></span>
+          <span>更新时间：<time id="update-date" itemprop="dateModified"></time></span>
+        </div>
+      </header>
+
+      <!-- 👇 Python 会直接将转好的 HTML 注入到这个 div 中 -->
+      <div id="markdown-content" class="markdown-body" itemprop="articleBody">
+<p>现在开发 AI 应用，很少有团队会从零开始手写所有底层代码。绝大多数开发者和企业都会选择优秀的开源框架和平台，例如：</p>
+<ul>
+<li><strong>ChatGPT Next Web (NextChat)</strong>：快速搭建个人专属的 AI 聊天对话框。</li>
+<li><strong>Dify</strong>：目前最火的 LLMOps 平台，用于搭建复杂的 AI 智能体和工作流。</li>
+<li><strong>FastGPT</strong>：强大的企业级知识库问答系统（RAG）。</li>
+<li><strong>LangChain / LlamaIndex</strong>：主流的大模型开发代码框架。</li>
+</ul>
+<p>但在部署好这些强大的工具后，国内开发者往往会面临一个核心问题：
+<strong>去哪里找稳定、能在国内直接调用、且支持多种模型的大模型 API 填进去？</strong></p>
+<p>如果你直接填官方的 OpenAI 接口，通常会因为网络不通而报错。这时候，使用完全兼容官方格式的 <strong>GPT中转站</strong>（或称 <strong>GPT API中转站</strong>）是最完美的解决方案。</p>
+<p>如果你正在寻找可以直接填入这些开源项目、稳定不掉线的大模型 API 接口，可以访问：</p>
+<blockquote>
+<p>AI API 中转站平台：<a href="https://quanzil.com">https://quanzil.com</a></p>
+<p>AI API 中转站平台：<a href="https://quanzil.net">https://quanzil.net</a></p>
+</blockquote>
+<p>本文将手把手教你，如何利用 GPT API中转站，在主流的开源 AI 项目中完成大模型的无缝配置。</p>
+<hr />
+<h2>一、为什么开源 AI 项目都能直接用 GPT中转站？</h2>
+<p>因为 <strong>OpenAI API 格式已经成为了大模型行业的“事实标准”</strong>。</p>
+<p>无论是 Dify 还是 FastGPT，在它们底层发起 <strong>GPT调用</strong> 的代码，都是按照 OpenAI 的 API 规范编写的（比如规定了 <code>messages</code> 数组、<code>role</code> 角色、<code>stream</code> 流式输出等）。</p>
+<p>而一个标准的 <strong>GPT API中转站</strong>，不仅能代理转发 OpenAI 的模型，还会把 Claude、Gemini、DeepSeek 等其他厂商的接口，统一包装成 OpenAI 的标准格式。</p>
+<p>这意味着：
+<strong>只要中转平台提供了 OpenAI 兼容接口，你就可以在任何支持 OpenAI 的软件里，直接填入中转平台的地址和密钥，从而一键调用全网大模型。</strong></p>
+<hr />
+<h2>二、配置前的准备工作（获取三大核心参数）</h2>
+<p>在开始配置任何平台之前，你需要先在你的 GPT中转站 后台获取以下三个核心参数：</p>
+<ol>
+<li><strong>API Key</strong>：你的专属调用密钥，通常以 <code>sk-</code> 开头。</li>
+<li><strong>Base URL（接口地址）</strong>：中转平台的请求基准地址。</li>
+<li><em>注意：不同软件对 Base URL 的格式要求略有不同，通常是 <code>https://域名/v1</code>。</em></li>
+<li><strong>模型名称（Model）</strong>：你要调用的具体模型名字，比如 <code>gpt-4o-mini</code>、<code>claude-3.5-sonnet</code> 等。</li>
+</ol>
+<hr />
+<h2>三、实战一：在 ChatGPT Next Web (NextChat) 中配置</h2>
+<p>ChatGPT Next Web 是一款全球最受欢迎的跨平台客户端，只要配置好接口，就能马上拥有一个类似 ChatGPT 官方的聊天界面。</p>
+<h3>配置步骤：</h3>
+<ol>
+<li>部署或打开 ChatGPT Next Web 页面。</li>
+<li>点击左下角的 <strong>设置（Settings）</strong> 按钮。</li>
+<li>找到 <strong>模型提供商 (Model Provider)</strong>，选择 <code>OpenAI</code>。</li>
+<li>填写参数：</li>
+<li><strong>接口地址 (Custom Endpoint)</strong>：填入中转站的 Base URL，例如 <code>https://quanzil.com</code> 或 <code>https://quanzil.com/v1</code>（视版本而定，新版通常填完整到 <code>/v1</code> 之前的域名即可，若报错请尝试补充 <code>/v1</code>）。</li>
+<li><strong>API Key</strong>：填入你在中转站生成的 API Key。</li>
+<li><strong>自定义模型 (Custom Models)</strong>：如果你想使用 Claude 或国产模型，可以在这里手动输入模型名称，例如 <code>claude-3.5-sonnet</code>，多模型用英文逗号隔开。</li>
+<li>配置完成后，回到聊天界面，在对话框上方的模型列表中选择对应的模型，即可开始对话。</li>
+</ol>
+<hr />
+<h2>四、实战二：在 Dify 中配置 GPT API</h2>
+<p>Dify 是目前极具人气的 AI 应用开发平台，支持快速搭建 Agent 和工作流。</p>
+<h3>配置步骤：</h3>
+<ol>
+<li>登录你的 Dify 后台。</li>
+<li>点击右上角的头像，进入 <strong>设置 (Settings)</strong> -&gt; <strong>模型供应商 (Model Providers)</strong>。</li>
+<li>向下滚动，找到并选择 <strong>OpenAI-API-compatible（兼容 OpenAI 格式）</strong>。</li>
+<li>点击 <strong>添加模型 (Add Model)</strong>，并在弹窗中填写：</li>
+<li><strong>模型名称 (Model Name)</strong>：输入你中转站支持的模型，例如 <code>gpt-4o</code>。</li>
+<li><strong>模型类型 (Model Type)</strong>：选择 <code>LLM</code>（如果是用来聊天的）或 <code>Text Embedding</code>（如果是用来做知识库向量化的）。</li>
+<li><strong>API Key</strong>：输入你的中转站 API Key。</li>
+<li><strong>API Endpoint URL</strong>：输入中转站完整的 Base URL，例如 <code>https://quanzil.com/v1</code>。（注意必须带 <code>/v1</code>）。</li>
+<li><strong>模型上下文长度 (Context Size)</strong>：按照官方文档填写，比如 gpt-4o 通常可以填 128000。</li>
+<li>点击保存。保存成功后，你在 Dify 的工作流或对话应用中，就可以选择这个模型节点进行调用了。</li>
+</ol>
+<p><em>小贴士：如果你想用 Embedding 模型做知识库，需要用同样的方法再添加一个模型，类型选择 Text Embedding，模型名称填入 <code>text-embedding-3-small</code> 等。</em></p>
+<hr />
+<h2>五、实战三：在 FastGPT 中配置大模型</h2>
+<p>FastGPT 是专门针对 RAG（知识库问答）场景打造的平台。它的模型配置通常在系统配置文件中完成（如果你是私有化部署的话）。</p>
+<h3>配置步骤：</h3>
+<ol>
+<li>找到你部署 FastGPT 目录下的 <code>config.json</code> 文件。</li>
+<li>找到 <code>llmModels</code>（对话模型库）和 <code>vectorModels</code>（向量模型库）配置项。</li>
+<li>添加或修改模型节点，将请求指向 <strong>GPT API中转站</strong>：</li>
+</ol>
+<pre><code class="language-json">&quot;llmModels&quot;: [
+  {
+    &quot;model&quot;: &quot;gpt-4o-mini&quot;,
+    &quot;name&quot;: &quot;GPT-4o-Mini&quot;,
+    &quot;avatar&quot;: &quot;/imgs/model/openai.svg&quot;,
+    &quot;maxContext&quot;: 128000,
+    &quot;maxResponse&quot;: 4000,
+    &quot;quoteMaxToken&quot;: 100000,
+    &quot;maxTemperature&quot;: 1.2,
+    &quot;censor&quot;: false,
+    &quot;vision&quot;: true,
+    &quot;datasetProcess&quot;: true,
+    &quot;usedInClassify&quot;: true,
+    &quot;usedInExtractFields&quot;: true,
+    &quot;usedInToolCall&quot;: true,
+    &quot;usedInQueryExtension&quot;: true,
+    &quot;toolChoice&quot;: true,
+    &quot;customCQPrompt&quot;: &quot;&quot;,
+    &quot;customExtractPrompt&quot;: &quot;&quot;,
+    &quot;defaultSystemChatPrompt&quot;: &quot;&quot;,
+    &quot;provider&quot;: &quot;openai&quot;
+  }
+]
+</code></pre>
+<ol>
+<li>打开系统环境变量文件 <code>docker-compose.yml</code>，修改以下环境变量：</li>
+<li><code>OPENAI_BASE_URL=https://quanzil.com/v1</code>  <em>(你的中转站地址)</em></li>
+<li><code>CHAT_API_KEY=sk-xxxxx</code> <em>(你的中转站 API Key)</em></li>
+<li>重启 FastGPT 服务，新模型即可在后台知识库和对话应用中生效。</li>
+</ol>
+<hr />
+<h2>六、实战四：在现有业务代码中无缝替换</h2>
+<p>如果你原本就是自己写代码调用官方的 API，现在想切换到国内的 <strong>GPT API中转站</strong>，代码改动极小。</p>
+<h3>Python 代码（基于 OpenAI SDK）</h3>
+<p><strong>旧代码（官方直连，可能报错）：</strong></p>
+<pre><code class="language-python">from openai import OpenAI
+
+client = OpenAI(
+    api_key=&quot;sk-openai-xxxxx&quot;
+)
+</code></pre>
+<p><strong>新代码（无缝替换为中转站）：</strong></p>
+<pre><code class="language-python">from openai import OpenAI
+
+client = OpenAI(
+    api_key=&quot;sk-中转站的-xxxxx&quot;,         # 变化1：替换为中转站 Key
+    base_url=&quot;https://quanzil.com/v1&quot;   # 变化2：指定中转站 Base URL
+)
+
+# 下面的业务调用代码【完全不用修改】
+response = client.chat.completions.create(
+    model=&quot;claude-3.5-sonnet&quot;,          # 变化3：可以随意写中转平台支持的任意模型
+    messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;你好&quot;}]
+)
+print(response.choices[0].message.content)
+</code></pre>
+<p>通过指定 <code>base_url</code>，底层 SDK 的所有网络请求都会自动发往你的中转站，业务逻辑 0 改动。</p>
+<hr />
+<h2>七、常见配置排错指南</h2>
+<p>在使用各种开源工具接入 <strong>GPT接口</strong> 时，可能会遇到一些小报错。以下是排查清单：</p>
+<h3>1. 报错 404 Not Found 或 Invalid URL</h3>
+<p><strong>原因</strong>：Base URL 填错了。
+<strong>解决</strong>：仔细看框架的提示。有些框架要求 Base URL 必须包含 <code>/v1</code>（如 <code>https://quanzil.com/v1</code>），有些框架内部会自动拼接 <code>/v1</code>，此时如果你填了 <code>/v1</code>，框架会拼成 <code>/v1/v1/chat/completions</code> 导致 404。多试一次带 <code>/v1</code> 和不带的即可。</p>
+<h3>2. 报错 401 Unauthorized</h3>
+<p><strong>原因</strong>：API Key 错误或未生效。
+<strong>解决</strong>：检查中转站后台的额度是否耗尽；检查是否在复制 API Key 时多带了空格；确认框架里填写的确实是当前中转站颁发的密钥，而不是旧的官方密钥。</p>
+<h3>3. 报错 Model Not Found (模型不存在)</h3>
+<p><strong>原因</strong>：你填写的模型名字与中转平台实际提供的名字不一致。
+<strong>解决</strong>：中转站的后台都会有一个“可用模型列表”。如果你想用 Claude，一定要去列表里看确切的拼写，是 <code>claude-3-5-sonnet</code> 还是 <code>claude-3.5-sonnet-20240620</code>，一个字母也不能错。</p>
+<h3>4. 报错 429 Too Many Requests</h3>
+<p><strong>原因</strong>：请求并发过高，被中转平台限流。
+<strong>解决</strong>：在 Dify 等平台跑大规模批量工作流时，不要并发上百个任务；或者联系中转平台客服，提升你的账号并发限制（RPM / TPM）。</p>
+<hr />
+<h2>八、总结</h2>
+<p>利用 <strong>GPT中转站</strong> 提供的 <strong>OpenAI兼容接口</strong>，国内开发者可以极速赋能现有的开源生态。</p>
+<p>不论你是想用 NextChat 给团队部署个内部助手，用 Dify 搭建企业智能体，还是用 FastGPT 接入上百万字的知识库，只需<strong>替换 API Key 和 Base URL</strong>，就能瞬间连接全网最顶尖的大模型算力，彻底摆脱网络代理和充值的烦恼。</p>
+<p>如果你正准备动手搭建这些应用，需要稳定、高速、且明码标价的 <strong>大模型API中转</strong> 服务，强烈推荐访问：</p>
+<blockquote>
+<p>AI API 中转站平台：<a href="https://quanzil.com">https://quanzil.com</a></p>
+<p>AI API 中转站平台：<a href="https://quanzil.net">https://quanzil.net</a></p>
+</blockquote>
+<p>赶快拿起这些强大的开源工具，配置好你的中转站接口，去打造属于你的超级 AI 应用吧！</p>
+</div>
+
+      <!-- 👇 Python 会识别并删除这个占位符，保持输出页面干净 -->
+      
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div>© <span id="current-year"></span> 保留所有权利</div>
+  </footer>
+
+  <script>
+    // Python 会替换这里的内容
+    const articleConfig = {
+  "title": "Dify、FastGPT、NextChat 怎么配置大模型？GPT中转站无缝接入实战教程",
+  "summary": "详细讲解如何在 Dify、FastGPT、ChatGPT Next Web 以及业务代码中配置 GPT中转站，实现 OpenAI 兼容接口的无缝替换，快速接入并调用多种大模型 API。",
+  "author": "ai agent",
+  "published": "2026-10-08 00:00:00",
+  "canonical": "https://quanzil.com/articles/how-to-call-gpt-api-in-china.html",
+  "targetUrl": "https://quanzil.com/",
+  "targetLabel": "进入 API 中转站 →",
+  "siteName": "API ",
+  "siteTagline": "让技术更简单",
+  "brandMark": "AI",
+  "homeUrl": "https://quanzil.com/",
+  "articlesUrl": "https://quanzil.com/pricing",
+  "docsUrl": "https://docs.quanzil.com/",
+  "pricingUrl": "https://quanzil.com/news/focus"
+};
+
+    const formatDate = value => new Intl.DateTimeFormat('zh-CN', {
+      year: 'numeric', month: '2-digit', day: '2-digit'
+    }).format(new Date(value));
+
+    // 填充顶部和导航信息
+    document.title = `${articleConfig.title}｜网站名称`;
+    document.getElementById('site-brand').href = articleConfig.homeUrl;
+    document.getElementById('brand-name').textContent = articleConfig.siteName;
+    document.getElementById('brand-tagline').textContent = articleConfig.siteTagline;
+    document.getElementById('brand-mark').textContent = articleConfig.brandMark;
+    document.getElementById('nav-home').href = articleConfig.homeUrl;
+    document.getElementById('nav-articles').href = articleConfig.articlesUrl;
+    document.getElementById('nav-docs').href = articleConfig.docsUrl;
+    document.getElementById('nav-pricing').href = articleConfig.pricingUrl;
+
+    // 填充文章 Meta 数据
+    document.getElementById('article-title').textContent = articleConfig.title;
+    document.getElementById('article-summary').textContent = articleConfig.summary;
+    document.getElementById('article-author').textContent = articleConfig.author;
+    const headerTarget = document.getElementById('header-target');
+    headerTarget.href = articleConfig.targetUrl;
+    headerTarget.textContent = articleConfig.targetLabel;
+
+    document.getElementById('publish-date').textContent = formatDate(articleConfig.published);
+    document.getElementById('publish-date').dateTime = articleConfig.published;
+
+    const updated = new Date();
+    const updateDate = updated.toISOString().slice(0, 10);
+    document.getElementById('update-date').textContent = formatDate(updateDate);
+    document.getElementById('update-date').dateTime = updateDate;
+    document.getElementById('current-year').textContent = updated.getFullYear();
+
+    // 构建结构化数据 (对百度/Google SEO 极其重要)
+    const schema = {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: articleConfig.title,
+      description: articleConfig.summary,
+      author: { '@type': 'Person', name: articleConfig.author },
+      datePublished: articleConfig.published,
+      dateModified: updateDate,
+      mainEntityOfPage: { '@type': 'WebPage', '@id': articleConfig.canonical }
+    };
+    const schemaScript = document.createElement('script');
+    schemaScript.type = 'application/ld+json';
+    schemaScript.textContent = JSON.stringify(schema);
+    document.head.appendChild(schemaScript);
+  </script>
+</body>
+</html>
